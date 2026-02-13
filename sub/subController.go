@@ -55,7 +55,8 @@ func NewSUBController(
 	sub := NewSubService(showInfo, rModel)
 	a := &SUBController{
 		subTitle:         subTitle,
-		subSupportUrl:    subSupportUrl,		subProfileUrl:    subProfileUrl,
+		subSupportUrl:    subSupportUrl,
+		subProfileUrl:    subProfileUrl,
 		subAnnounce:      subAnnounce,
 		subEnableRouting: subEnableRouting,
 		subRoutingRules:  subRoutingRules,
