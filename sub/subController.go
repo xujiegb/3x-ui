@@ -3,6 +3,7 @@ package sub
 import (
 	"encoding/base64"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -85,6 +86,10 @@ func (a *SUBController) initRouter(g *gin.RouterGroup) {
 // subs handles HTTP requests for subscription links, returning either HTML page or base64-encoded subscription data.
 func (a *SUBController) subs(c *gin.Context) {
 	subId := c.Param("subid")
+	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9\-_]+$`, subId); !matched {
+		c.String(400, "Invalid ID")
+		return
+	}
 	scheme, host, hostWithPort, hostHeader := a.subService.ResolveRequest(c)
 	subs, lastOnline, traffic, err := a.subService.GetSubs(subId, host)
 	if err != nil || len(subs) == 0 {
@@ -160,6 +165,10 @@ func (a *SUBController) subs(c *gin.Context) {
 // subJsons handles HTTP requests for JSON subscription configurations.
 func (a *SUBController) subJsons(c *gin.Context) {
 	subId := c.Param("subid")
+	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9\-_]+$`, subId); !matched {
+		c.String(400, "Invalid ID")
+		return
+	}
 	scheme, host, hostWithPort, _ := a.subService.ResolveRequest(c)
 	jsonSub, header, err := a.subJsonService.GetJson(subId, host)
 	if err != nil || len(jsonSub) == 0 {
@@ -190,6 +199,7 @@ func (a *SUBController) ApplyCommonHeaders(
 ) {
 	c.Writer.Header().Set("Subscription-Userinfo", header)
 	c.Writer.Header().Set("Profile-Update-Interval", updateInterval)
+	c.Writer.Header().Set("X-Content-Type-Options", "nosniff")
 
 	//Basics
 	if profileTitle != "" {
