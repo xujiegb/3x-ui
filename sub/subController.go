@@ -88,7 +88,7 @@ func (a *SUBController) initRouter(g *gin.RouterGroup) {
 func (a *SUBController) subs(c *gin.Context) {
 	rawSubId := c.Param("subid")
 	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9\-_]+$`, rawSubId); !matched {
-		c.String(400, "Invalid ID")
+		c.String(400, "Error!")
 		return
 	}
 	subId := html.EscapeString(rawSubId)
@@ -124,6 +124,13 @@ func (a *SUBController) subs(c *gin.Context) {
 				basePathStr = strings.TrimRight(basePathStr, "/") + "/" + subId + "/"
 			}
 			page := a.subService.BuildPageData(subId, hostHeader, traffic, lastOnline, subs, subURL, subJsonURL, basePathStr)
+			
+			// Escape each string in the Result slice to prevent XSS and match type
+			escapedResults := make([]string, len(page.Result))
+			for i, r := range page.Result {
+				escapedResults[i] = html.EscapeString(r)
+			}
+
 			c.HTML(200, "subpage.html", gin.H{
 				"title":        "subscription.title",
 				"cur_ver":      config.GetVersion(),
@@ -143,7 +150,7 @@ func (a *SUBController) subs(c *gin.Context) {
 				"totalByte":    page.TotalByte,
 				"subUrl":       page.SubUrl,
 				"subJsonUrl":   page.SubJsonUrl,
-				"result":       html.EscapeString(page.Result),
+				"result":       escapedResults,
 			})
 			return
 		}
@@ -168,7 +175,7 @@ func (a *SUBController) subs(c *gin.Context) {
 func (a *SUBController) subJsons(c *gin.Context) {
 	rawSubId := c.Param("subid")
 	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9\-_]+$`, rawSubId); !matched {
-		c.String(400, "Invalid ID")
+		c.String(400, "Error!")
 		return
 	}
 	subId := html.EscapeString(rawSubId)
