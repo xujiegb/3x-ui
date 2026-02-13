@@ -3,6 +3,7 @@ package sub
 import (
 	"encoding/base64"
 	"fmt"
+	"html"
 	"regexp"
 	"strconv"
 	"strings"
@@ -54,8 +55,7 @@ func NewSUBController(
 	sub := NewSubService(showInfo, rModel)
 	a := &SUBController{
 		subTitle:         subTitle,
-		subSupportUrl:    subSupportUrl,
-		subProfileUrl:    subProfileUrl,
+		subSupportUrl:    subSupportUrl,		subProfileUrl:    subProfileUrl,
 		subAnnounce:      subAnnounce,
 		subEnableRouting: subEnableRouting,
 		subRoutingRules:  subRoutingRules,
@@ -85,11 +85,12 @@ func (a *SUBController) initRouter(g *gin.RouterGroup) {
 
 // subs handles HTTP requests for subscription links, returning either HTML page or base64-encoded subscription data.
 func (a *SUBController) subs(c *gin.Context) {
-	subId := c.Param("subid")
-	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9\-_]+$`, subId); !matched {
+	rawSubId := c.Param("subid")
+	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9\-_]+$`, rawSubId); !matched {
 		c.String(400, "Invalid ID")
 		return
 	}
+	subId := html.EscapeString(rawSubId)
 	scheme, host, hostWithPort, hostHeader := a.subService.ResolveRequest(c)
 	subs, lastOnline, traffic, err := a.subService.GetSubs(subId, host)
 	if err != nil || len(subs) == 0 {
@@ -141,7 +142,7 @@ func (a *SUBController) subs(c *gin.Context) {
 				"totalByte":    page.TotalByte,
 				"subUrl":       page.SubUrl,
 				"subJsonUrl":   page.SubJsonUrl,
-				"result":       page.Result,
+				"result":       html.EscapeString(page.Result),
 			})
 			return
 		}
@@ -164,11 +165,12 @@ func (a *SUBController) subs(c *gin.Context) {
 
 // subJsons handles HTTP requests for JSON subscription configurations.
 func (a *SUBController) subJsons(c *gin.Context) {
-	subId := c.Param("subid")
-	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9\-_]+$`, subId); !matched {
+	rawSubId := c.Param("subid")
+	if matched, _ := regexp.MatchString(`^[a-zA-Z0-9\-_]+$`, rawSubId); !matched {
 		c.String(400, "Invalid ID")
 		return
 	}
+	subId := html.EscapeString(rawSubId)
 	scheme, host, hostWithPort, _ := a.subService.ResolveRequest(c)
 	jsonSub, header, err := a.subJsonService.GetJson(subId, host)
 	if err != nil || len(jsonSub) == 0 {
